@@ -1,3 +1,8 @@
+_x .equ 3
+_y .equ 9
+_w .equ 30
+_h .equ 15
+
 #include "kernel.inc"
 #include "corelib.inc"
     .db "KEXC"
@@ -9,12 +14,12 @@
     .dw name
     .db KEXC_HEADER_END
 name:
-    .db "life", 0
+    .db "Conway's Game of Life", 0 ;' <- fix syntax highlighting
 corelib_path:
     .db "/lib/core"
 start:
     ; This is an example program, replace it with your own!
-    
+
     kld(de, corelib_path)
     pcall(loadLibrary)
 
@@ -30,9 +35,11 @@ start:
     ; Copy the display buffer to the actual LCD
     pcall(fastCopy)
 
-    ld a, %00000100
-    kld(hl, window_title)
+    ld a, 0b00000100
+    kld(hl, name)
     corelib(drawWindow)
+
+    kcall(drawBoard)
 
     corelib(appGetKey)
 
@@ -42,5 +49,30 @@ start:
     ; Exit when the user presses "MODE"
     ret
 
-window_title:
-    .db "Conway's Game of Life", 0
+drawBoard:
+    ld l, _y
+    ld b, _h
+.rows:
+    push bc
+    ld e, _x
+    ld b, _w
+.cols:
+    push bc
+    ld bc, 0x0303
+    pcall(rectOR)
+    inc l
+    ld a, e
+    inc a
+    pcall(resetPixel)
+    dec l
+    inc e \ inc e \ inc e
+    pop bc
+    djnz .cols
+    pop bc
+    inc l \ inc l \ inc l
+    djnz .rows
+
+    ret
+
+board:
+    ;.fill
