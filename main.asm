@@ -17,6 +17,7 @@ name:
     .db "Conway's Game of Life", 0 ;' <- fix syntax highlighting
 corelib_path:
     .db "/lib/core"
+
 start:
     ; This is an example program, replace it with your own!
 
@@ -30,6 +31,14 @@ start:
     ; Allocate and clear a buffer to store the contents of the screen
     pcall(allocScreenBuffer)
     pcall(clearBuffer)
+
+    ld bc, 60 ; ceil(30/8)*15
+    pcall(malloc)
+    ld (board), ix
+
+    ld bc, 60 ; ceil(30/8)*15
+    pcall(malloc)
+    ld (next_board), ix
 
 .loop:
     ; Copy the display buffer to the actual LCD
@@ -74,5 +83,36 @@ drawBoard:
 
     ret
 
+;; getBoard
+;; Gets specific location from board array
+;; Inputs:
+;;  HL: Address of board
+;;  B, C: row, column of location
+;; Outputs:
+;;  Z: Set if location is alive, reset if dead
+
+getBoard:
+
+;; setBoard
+;; Sets specific location to board array
+;; Inputs:
+;;  HL: Address of board
+;;  B, C: row, column of location
+;;  A: value to put on board
+
+setBoard:
+
+
+
 board:
-    ;.fill
+    .db 0x0000
+
+next_board:
+    .db 0x0000
+
+rules:
+    .db 3
+    .db 0xFF
+    .db 2
+    .db 3
+    .db 0xFF
