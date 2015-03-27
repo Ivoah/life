@@ -34,11 +34,11 @@ start:
 
     ld bc, 60 ; ceil(30/8)*15
     pcall(malloc)
-    ld (board), ix
+    kld((board), ix)
 
     ld bc, 60 ; ceil(30/8)*15
     pcall(malloc)
-    ld (next_board), ix
+    kld((next_board), ix)
 
 .loop:
     ; Copy the display buffer to the actual LCD
@@ -67,14 +67,11 @@ drawBoard:
     ld b, _w
 .cols:
     push bc
-    ld bc, 0x0303
-    pcall(rectOR)
-    inc l
-    ld a, e
-    inc a
-    pcall(resetPixel)
-    dec l
-    inc e \ inc e \ inc e
+    push hl \ push de
+    ld b, l \ ld c, e
+    kcall(getBoard)
+    pop de \ pop hl
+    kcall(c, .drawCell)
     pop bc
     djnz .cols
     pop bc
@@ -83,20 +80,47 @@ drawBoard:
 
     ret
 
+.drawCell:
+    ld bc, 0x0303
+    pcall(rectOR)
+    inc l
+    ld a, e
+    inc a
+    pcall(resetPixel)
+    dec l
+    inc e \ inc e \ inc e
+
+    ret
+
 ;; getBoard
 ;; Gets specific location from board array
 ;; Inputs:
-;;  HL: Address of board
 ;;  B, C: row, column of location
 ;; Outputs:
-;;  Z: Set if location is alive, reset if dead
+;;  Flag C: Set if location is alive, reset if dead
 
 getBoard:
+    push bc
+    srl b \ srl b \ srl b
+    ld h, 0
+    ld l, b
+    add hl, hl \ add hl, hl
+    kld(de, (board))
+    add hl, de
+    ex de, hl
+
+    ld h, 0
+    ld l, c
+    add hl, de
+    ld a, (hl)
+    pop bc
+    inc b \ rra \ djnz $-1
+
+    ret
 
 ;; setBoard
 ;; Sets specific location to board array
 ;; Inputs:
-;;  HL: Address of board
 ;;  B, C: row, column of location
 ;;  A: value to put on board
 
@@ -105,10 +129,10 @@ setBoard:
 
 
 board:
-    .db 0x0000
+    .dw 0x0000
 
 next_board:
-    .db 0x0000
+    .dw 0x0000
 
 rules:
     .db 3
