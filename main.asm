@@ -40,6 +40,14 @@ start:
     pcall(malloc)
     kld((next_board), ix)
 
+    kld(hl, (board))
+    ld b, 60
+.rnd_loop:
+    pcall(getRandom)
+    ld (hl), a
+    inc hl
+    djnz .rnd_loop
+
 .loop:
     ; Copy the display buffer to the actual LCD
     pcall(fastCopy)
