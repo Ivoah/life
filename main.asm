@@ -16,7 +16,7 @@ _h .equ 15
 name:
     .db "Conway's Game of Life", 0 ;' <- fix syntax highlighting
 corelib_path:
-    .db "/lib/core"
+    .db "/lib/core",0
 
 start:
     ; This is an example program, replace it with your own!
@@ -67,36 +67,37 @@ start:
     ret
 
 drawBoard:
-    ld l, _y
+    ld l, 0 ; y
     ld b, _h
 .rows:
     push bc
-    ld e, _x
+    ld e, 0 ; x
     ld b, _w
 .cols:
     push bc
-    push hl \ push de
     ld b, l \ ld c, e
     kcall(getBoard)
-    pop de \ pop hl
     kcall(c, .drawCell)
+    inc e
     pop bc
     djnz .cols
     pop bc
-    inc l \ inc l \ inc l
+    inc l
     djnz .rows
 
     ret
 
 .drawCell:
+    push hl \ push de
+    ld a, l \ add a, l \ add a, l \ add a, _y \ ld l, a
+    ld a, e \ add a, e \ add a, e \ add a, _x \ ld e, a
     ld bc, 0x0303
     pcall(rectOR)
     inc l
     ld a, e
     inc a
     pcall(resetPixel)
-    dec l
-    inc e \ inc e \ inc e
+    pop de \ pop hl
 
     ret
 
@@ -108,8 +109,8 @@ drawBoard:
 ;;  Flag C: Set if location is alive, reset if dead
 
 getBoard:
-    push bc
-    srl b \ srl b \ srl b
+    push hl \ push de \ push bc
+    srl c \ srl c \ srl c
     ld h, 0
     ld l, b
     add hl, hl \ add hl, hl
@@ -122,7 +123,14 @@ getBoard:
     add hl, de
     ld a, (hl)
     pop bc
+
+    ld d, c \ ld e, 8
+    push af
+    pcall(div8By8)
+    ld b, a
+    pop af
     inc b \ rra \ djnz $-1
+    pop de \ pop hl
 
     ret
 
