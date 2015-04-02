@@ -71,16 +71,19 @@ drawBoard:
     ld b, _h
 .rows:
     push bc
-    ld e, 0 ; x
-    ld b, _w
-.cols:
-    push bc
-    ld b, l \ ld c, e
-    kcall(getBoard)
-    kcall(c, .drawCell)
-    inc e
-    pop bc
-    djnz .cols
+        ld e, 0 ; x
+        ld b, _w
+    .cols:
+        push bc
+            ld b, l \ ld c, e
+            push de
+                kld(de, (board))
+                kcall(getBoard)
+            pop de
+            kcall(c, .drawCell)
+            inc e
+        pop bc
+        djnz .cols
     pop bc
     inc l
     djnz .rows
@@ -89,48 +92,48 @@ drawBoard:
 
 .drawCell:
     push hl \ push de
-    ld a, l \ add a, l \ add a, l \ add a, _y \ ld l, a
-    ld a, e \ add a, e \ add a, e \ add a, _x \ ld e, a
-    ld bc, 0x0303
-    pcall(rectOR)
-    inc l
-    ld a, e
-    inc a
-    pcall(resetPixel)
+        ld a, e \ add a, e \ add a, e \ add a, _x \ ld d, a ; multiply by 3 and add _x
+        ld a, l \ add a, l \ add a, l \ add a, _y \ ld e, a ; multiply by 3 and add _y
+        ld b, 3
+        kld(hl, cell_sprite)
+        pcall(putSpriteOR)
     pop de \ pop hl
 
     ret
+
 
 ;; getBoard
 ;; Gets specific location from board array
 ;; Inputs:
 ;;  B, C: row, column of location
+;;  DE: address of board
 ;; Outputs:
 ;;  Flag C: Set if location is alive, reset if dead
 
 getBoard:
-    push hl \ push de \ push bc
-    srl c \ srl c \ srl c
-    ld h, 0
-    ld l, b
-    add hl, hl \ add hl, hl
-    kld(de, (board))
-    add hl, de
-    ex de, hl
+    push hl
+        push bc
+            srl c \ srl c \ srl c
+            ld h, 0
+            ld l, b
+            add hl, hl \ add hl, hl
+            add hl, de
+            ex de, hl
 
-    ld h, 0
-    ld l, c
-    add hl, de
-    ld a, (hl)
-    pop bc
+            ld h, 0
+            ld l, c
+            add hl, de
+            ld a, (hl)
+        pop bc
 
-    ld d, c \ ld e, 8
-    push af
-    pcall(div8By8)
-    ld b, a
-    pop af
-    inc b \ rra \ djnz $-1
-    pop de \ pop hl
+        ld d, c \ ld e, 8
+        push af
+            pcall(div8By8)
+            ld b, a
+        pop af
+
+        inc b \ rra \ djnz $-1
+    pop hl
 
     ret
 
@@ -138,10 +141,35 @@ getBoard:
 ;; Sets specific location to board array
 ;; Inputs:
 ;;  B, C: row, column of location
+;;  DE: address of board
 ;;  A: value to put on board
 
 setBoard:
+    push hl
+        push bc
+            srl c \ srl c \ srl c
+            ld h, 0
+            ld l, b
+            add hl, hl \ add hl, hl
+            add hl, de
+            ex de, hl
 
+            ld h, 0
+            ld l, c
+            add hl, de
+            ld a, (hl)
+        pop bc
+
+        ld d, c \ ld e, 8
+        push af
+            pcall(div8By8)
+            ld b, a
+        pop af
+
+        inc b \ rra \ djnz $-1
+    pop hl
+
+    ret
 
 
 board:
@@ -151,8 +179,10 @@ next_board:
     .dw 0x0000
 
 rules:
-    .db 3
-    .db 0xFF
-    .db 2
-    .db 3
-    .db 0xFF
+    .db 0b00000100 ;3
+    .db 0b00000110 ;2,3
+
+cell_sprite:
+    .db 0b11100000
+    .db 0b10100000
+    .db 0b11100000
