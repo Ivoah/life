@@ -124,12 +124,13 @@ getBoard:
             ld l, c
             add hl, de
             ld a, (hl)
+            ;jr $
         pop bc
 
         ld d, c \ ld e, 8
         push af
             pcall(div8By8)
-            ld b, a
+            ld b, a \ ld a, 7 \ sub b \ ld b, a ; subtract remainder from 7
         pop af
 
         inc b \ rra \ djnz $-1
@@ -157,16 +158,16 @@ setBoard:
             ld h, 0
             ld l, c
             add hl, de
-            ld a, (hl)
-        pop bc
+        pop bc ; address of byte is in hl
 
         ld d, c \ ld e, 8
         push af
             pcall(div8By8)
-            ld b, a
-        pop af
+            ld b, a \ ld a, 7 \ sub b \ ld b, a ; subtract remainder from 7
+        pop af ; b holds location of bit in byte
 
-        inc b \ rra \ djnz $-1
+        ld c, 0b10000000
+        inc b \ srl c \ djnz $-1
     pop hl
 
     ret
