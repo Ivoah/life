@@ -48,6 +48,12 @@ start:
     inc hl
     djnz .rnd_loop
 
+    kld(de, (board))
+    ld b, 0
+    ld c, 0
+    ld a, 1
+    kcall(setBoard)
+
 .loop:
     ; Copy the display buffer to the actual LCD
     pcall(fastCopy)
@@ -167,7 +173,14 @@ setBoard:
         pop af ; b holds location of bit in byte
 
         ld c, 0b10000000
-        inc b \ srl c \ djnz $-1
+        inc b \ djnz .skip
+        srl c \ djnz $-1
+.skip:
+        or a \ and a ; cp 0
+        jr nz, .set
+        ld a, c \ xor 0xFF \ ld c, a
+.set:
+        ld a, (hl) \ or c \ ld (hl), a
     pop hl
 
     ret
