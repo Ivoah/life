@@ -1,4 +1,4 @@
-# rubik
+# life
 
 Conway's Game of Life Simulation for KnightOS
 
